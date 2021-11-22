@@ -3,9 +3,9 @@ import os
 import json
 import pandas as pd
 
-basedir="/home/kali/scripts/googlemaps/Takeout/Location History/Semantic Location History"
+BASEDIR="/home/kali/scripts/googlemaps/Takeout/Location History/Semantic Location History"
 
-years = os.listdir(basedir)
+years = os.listdir(BASEDIR)
 
 visits = {}
 
@@ -15,11 +15,11 @@ out = open('visit_history__short_coords.csv','w')
 out.write("PlaceID,Name,Location,Latitude,Longitude,StartTime,EndTime\n")
 
 for year in years:
-    files = os.listdir("%s/%s" % (basedir,year))
-    files = [ "%s/%s/%s" % (basedir,year,file) for file in files if file.endswith("json") ]
+    files = os.listdir("%s/%s" % (BASEDIR,year))
+    files = [ "%s/%s/%s" % (BASEDIR,year,file) for file in files if file.endswith("json") ]
     for file in files:
         print(file)
-        f = open(file,)
+        f = open(file,encoding="utf-8")
         data = json.load(f)
 
         objects = data['timelineObjects']
@@ -34,14 +34,14 @@ for year in years:
                 v = o['placeVisit']
 
                 if 'location' not in v or 'duration' not in v:
-                    next
+                    continue
 
                 l = v['location']
                 d = v['duration']
 
                 for key in 'placeId', 'name','address','latitudeE7','longitudeE7':
 
-                    val = ''
+                    val = ""
 
                     if key in l:
                         val = l[key]
@@ -52,18 +52,18 @@ for year in years:
                         val = val.replace('\n',' ')
 
                     if key in [ 'latitudeE7', 'longitudeE7' ]:
-                        if val == '':
+                        if val == "":
                             val = 0
                         val = int(val)
                         #print('val=%s' % val)
                         try:
                             val /= 10000000.0
                         except ValueError as e:
-                            print("BAD [ValueError]: key=%s val=%s: %s" % (key,val,l))
+                            print( f'BAD [ValueError]: key={key} val={val}: {l}' )
 
                         # limit to 3
-                        val = "%.03f" % val
-                        #val = "%.06f" % val
+                        val = '%.03f' % val
+                        #val = '%.06f' % val
 
                         key = key.replace('E7','')
 
@@ -72,15 +72,16 @@ for year in years:
                 for key in 'startTimestampMs', 'endTimestampMs':
                     val = d[key]
                     val = pd.to_datetime( val, unit='ms' )
+                    #print("val=%s" % val)
+
                     # remove milliseconds
-                    print("val=%s" % val)
                     if len(str(val)) == 26:
                         val = str(val)[:-7]
-                        print("val=%s" % val)
+                        #print("val=%s" % val)
+                    key = key.replace('Ms','')
                     visit[key] = val
 
                 visits.append(visit)
 
         for v in visits:
-            out.write("%s,'%s','%s',%s,%s,%s,%s\n" % (v['placeId'], v['name'], v['address'], v['latitude'], v['longitude'], v['startTimestampMs'], v['endTimestampMs']))
-
+            out.write("{placeId},{name},{address},{latitude},{longitude},{startTimestamp},{endTimestamp}\n".format(**v))
