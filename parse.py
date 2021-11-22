@@ -1,18 +1,35 @@
 #!/usr/bin/env python
+
+"""
+    This script will parse a set of Google's 'Semantic Location Hisory' exports (from Timeline).
+    It will normalize and format them into a CSV with lines containing a 'visit' each, and 
+    having the following fields:
+
+        placeID, placeName, placeLocation, latitude, longitude, startTimestamp, endTimestamp
+
+    The file can then be imported into excel or processed using command line tools.
+"""
+
+__version__ = '0.3'
+__author__ = 'James Ponza'
+
+
 import os
+
 import json
 import pandas as pd
 
-BASEDIR="/home/kali/scripts/googlemaps/Takeout/Location History/Semantic Location History"
 
-years = os.listdir(BASEDIR)
+BASEDIR='/home/kali/scripts/googlemaps/Takeout/Location History/Semantic Location History'
+OUTFILE='visit_history.csv'
+
+
+out = open(OUTFILE,'w')
+out.write("PlaceID,Name,Location,Latitude,Longitude,StartTime,EndTime\n")
+
 
 visits = {}
-
-out = open('visit_history__short_coords.csv','w')
-#out = open('visit_history.csv','w')
-
-out.write("PlaceID,Name,Location,Latitude,Longitude,StartTime,EndTime\n")
+years = os.listdir(BASEDIR)
 
 for year in years:
     files = os.listdir("%s/%s" % (BASEDIR,year))
@@ -45,7 +62,6 @@ for year in years:
 
                     if key in l:
                         val = l[key]
-                        #print("key='%s' val='%s'" % (key,val))
 
                     if key in [ 'name', 'address' ]:
                         val = val.replace(',',' ')
@@ -55,7 +71,6 @@ for year in years:
                         if val == "":
                             val = 0
                         val = int(val)
-                        #print('val=%s' % val)
                         try:
                             val /= 10000000.0
                         except ValueError as e:
@@ -72,12 +87,11 @@ for year in years:
                 for key in 'startTimestampMs', 'endTimestampMs':
                     val = d[key]
                     val = pd.to_datetime( val, unit='ms' )
-                    #print("val=%s" % val)
 
                     # remove milliseconds
                     if len(str(val)) == 26:
                         val = str(val)[:-7]
-                        #print("val=%s" % val)
+
                     key = key.replace('Ms','')
                     visit[key] = val
 
