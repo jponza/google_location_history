@@ -2,7 +2,7 @@
 
 """
     This script will parse a set of Google's 'Semantic Location Hisory' exports (from Timeline).
-    It will normalize and format them into a CSV with lines containing a 'visit' each, and 
+    It will normalize and format them into a CSV with lines containing a 'visit' each, and
     having the following fields:
 
         placeID, placeName, placeLocation, latitude, longitude, startTimestamp, endTimestamp
@@ -20,15 +20,14 @@ import json
 import pandas as pd
 
 
-BASEDIR='/home/kali/scripts/googlemaps/Takeout/Location History/Semantic Location History'
-OUTFILE='visit_history.csv'
-
+BASEDIR='/home/kali/scripts/googlemaps/Antek/Takeout/Location History/Semantic Location History'
+OUTFILE='antek_visit_history__fullcoords.csv'
 
 out = open(OUTFILE,'w')
 out.write("PlaceID,Name,Location,Latitude,Longitude,StartTime,EndTime\n")
 
 
-visits = {}
+visits = []
 years = os.listdir(BASEDIR)
 
 for year in years:
@@ -41,7 +40,6 @@ for year in years:
 
         objects = data['timelineObjects']
 
-        visits = []
 
         for o in objects:
 
@@ -77,8 +75,9 @@ for year in years:
                             print( f'BAD [ValueError]: key={key} val={val}: {l}' )
 
                         # limit to 3
-                        val = '%.03f' % val
+                        #val = '%.03f' % val
                         #val = '%.06f' % val
+                        val = '%.7f' % val
 
                         key = key.replace('E7','')
 
@@ -97,5 +96,23 @@ for year in years:
 
                 visits.append(visit)
 
-        for v in visits:
-            out.write("{placeId},{name},{address},{latitude},{longitude},{startTimestamp},{endTimestamp}\n".format(**v))
+                print(f"len(visits) = {len(visits)}\n")
+        print(f"len(visits) = {len(visits)}\n")
+print(f"len(visits) = {len(visits)}\n")
+
+# total up the number of visits so we can record them
+numvisits = {}
+for v in visits:
+    placeId = v['placeId']
+    if placeId in numvisits:
+        numvisits[placeId] += 1
+    else:
+        numvisits[placeId] = 1
+
+# now write it all out to a file
+for v in visits:
+    v['visits'] = numvisits[v['placeId']]
+
+    out.write("{visits},{placeId},{name},{address},{latitude},{longitude},{startTimestamp},{endTimestamp}\n".format(**v))
+
+
