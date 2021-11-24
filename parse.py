@@ -24,7 +24,7 @@ BASEDIR='/home/kali/scripts/googlemaps/Antek/Takeout/Location History/Semantic L
 OUTFILE='antek_visit_history__fullcoords.csv'
 
 out = open(OUTFILE,'w')
-out.write("PlaceID,Name,Location,Latitude,Longitude,StartTime,EndTime\n")
+out.write("placeVisits,PlaceID,Name,Location,Latitude,Longitude,StartTime,EndTime\n")
 
 
 visits = []
@@ -95,10 +95,6 @@ for year in years:
                     visit[key] = val
 
                 visits.append(visit)
-
-                print(f"len(visits) = {len(visits)}\n")
-        print(f"len(visits) = {len(visits)}\n")
-print(f"len(visits) = {len(visits)}\n")
 
 # total up the number of visits so we can record them
 numvisits = {}
